@@ -30,7 +30,7 @@
 
   <div class="inline">
     <button class="primary small" id="salvarTempoBtn">Salvar Tempo</button>
-    <button id="recarregarLista" class="small">Recarregar Lista</button>
+    <!--<button id="recarregarLista" class="small">Recarregar Lista</button>-->
   </div>
 
   <hr>
@@ -47,15 +47,6 @@
 </div>
 
 <script type="module">
-/*
-  Cadastro atualizado:
-  - Upload em lote (múltiplos arquivos) para ImgBB (envia base64)
-  - Grava cada imagem com push() em RELATORIOS-PESADAS-PRTNRV/imagens
-  - Permite excluir (botão) com confirmação
-  - Salvar tempo em RELATORIOS-PESADAS-PRTNRV/tempo
-  - Lista em tempo real (onValue)
-*/
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getDatabase, ref, push, set, onValue, remove, update, get, child
@@ -75,7 +66,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const DB_NODE = "RELATORIOS-PESADAS-PRTNRV";
-const IMGBB_KEY = "95bb16ee776d7e20f26857cec98bd372"; // já fornecida
+const IMGBB_KEY = "95bb16ee776d7e20f26857cec98bd372"; 
 
 // Elements
 const filesInput = document.getElementById("files");
@@ -88,14 +79,12 @@ const recarregarBtn = document.getElementById("recarregarLista");
 
 let currentTempo = 5000;
 
-// Função util - read file as base64 (no cabeçalho data:...)
 function fileToBase64(file){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
     reader.onload = () => {
-      // reader.result is like "data:image/png;base64,AAA..."
       const result = reader.result;
-      const base64 = result.split(",")[1]; // remove prefix
+      const base64 = result.split(",")[1]; 
       resolve(base64);
     };
     reader.onerror = reject;
@@ -103,7 +92,6 @@ function fileToBase64(file){
   });
 }
 
-// Upload single file to ImgBB (returns URL)
 async function uploadToImgbbBase64(base64, name){
   const form = new FormData();
   form.append("key", IMGBB_KEY);
@@ -116,7 +104,6 @@ async function uploadToImgbbBase64(base64, name){
   return json.data.url;
 }
 
-// Enviar múltiplas imagens
 enviarBtn.addEventListener("click", async () => {
   const files = Array.from(filesInput.files || []);
   if(files.length === 0) return alert("Selecione pelo menos uma imagem.");
@@ -149,7 +136,6 @@ enviarBtn.addEventListener("click", async () => {
   progressEl.textContent = "Concluído";
 });
 
-// Salvar tempo
 salvarTempoBtn.addEventListener("click", async () => {
   const t = parseInt(tempoInput.value);
   if(isNaN(t) || t <= 0) return alert("Informe um tempo válido em milissegundos (ex: 5000).");
@@ -157,10 +143,8 @@ salvarTempoBtn.addEventListener("click", async () => {
   alert("Tempo salvo: " + t + " ms");
 });
 
-// Recarregar / Forçar leitura
 recarregarBtn.addEventListener("click", carregarLista);
 
-// Carrega lista em tempo real
 function carregarLista(){
   const imagensRef = ref(db, `${DB_NODE}/imagens`);
   onValue(imagensRef, (snap) => {
@@ -170,7 +154,6 @@ function carregarLista(){
       listaEl.innerHTML = `<div>Nenhuma imagem cadastrada.</div>`;
       return;
     }
-    // val: { key: {url,filename,createdAt}, ... }
     const entries = Object.entries(val).sort((a,b)=> (b[1].createdAt||0)-(a[1].createdAt||0));
     for(const [key, data] of entries){
       const div = document.createElement("div");
@@ -190,7 +173,6 @@ function carregarLista(){
     }
   });
 
-  // também ler tempo atual
   const rootRef = ref(db, DB_NODE + "/tempo");
   onValue(rootRef, snap => {
     const v = snap.val();
@@ -199,14 +181,12 @@ function carregarLista(){
 }
 carregarLista();
 
-// Excluir - exposto globalmente para uso inline
 window.excluir = async function(key){
   if(!confirm("Excluir essa imagem?")) return;
   await remove(ref(db, `${DB_NODE}/imagens/${key}`));
   alert("Imagem excluída.");
 };
 
-// Abrir imagem em nova aba
 window.mostrar = function(key){
   get(ref(db, `${DB_NODE}/imagens/${key}`)).then(s=>{
     const v = s.val();
